@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GALAXY ARCADE PRO - V3</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-pink: #ff007b;
+            --neon-green: #39ff14;
+            --neon-red: #ff3131;
+            --bg-deep: #050510;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Dinamik Yıldızlı Arka Plan */
+        #starfield {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: rgba(255, 255, 255, 0.03);
+            width: 100%;
+            border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 12px;
+            background: linear-gradient(to right, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px var(--neon-blue));
+        }
+
+        /* Oyun Menüsü */
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            width: 90%;
+            max-width: 1200px;
+            margin-top: 50px;
+            padding-bottom: 100px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-15px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--neon-blue);
+            box-shadow: 0 10px 40px rgba(0, 210, 255, 0.3);
+        }
+
+        .game-card i {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        /* Overlay Arayüzü */
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(15px);
+        }
+
+        canvas {
+            background: #000;
+            border: 3px solid var(--neon-blue);
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
+            border-radius: 15px;
+            max-width: 95vw;
+            max-height: 80vh;
+        }
+
+        /* Pro HTML Panel */
+        .html-box {
+            background: rgba(20, 20, 30, 0.95);
+            border: 2px solid var(--neon-blue);
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 210, 255, 0.4);
+            min-width: 350px;
+        }
+
+        .input-pro {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--neon-blue);
+            color: white;
+            font-family: 'Orbitron';
+            font-size: 2rem;
+            text-align: center;
+            width: 150px;
+            margin: 20px 0;
+            outline: none;
+        }
+
+        .btn-pro {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-family: 'Orbitron';
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 10px;
+        }
+
+        .btn-pro:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        /* Exit Button */
+        .exit-btn {
+            position: absolute;
+            bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 30px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Orbitron';
+        }
+
+        /* Sonuç Paneli */
+        #result-screen {
+            display: none;
+            position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 320px;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1010;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+        .win { background: var(--neon-green); color: black; box-shadow: 0 0 100px var(--neon-green); }
+        .lose { background: var(--neon-red); color: white; box-shadow: 0 0 100px var(--neon-red); }
+
+        /* Meme Sidebars */
+        .meme-area {
+            position: fixed; width: 200px; height: 300px; top: 50%; transform: translateY(-50%);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; display: none;
+        }
+        .meme-area img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div id="starfield"></div>
+
+    <header>
+        <h1>GALAXY ARCADE</h1>
+        <p style="color: var(--neon-blue); letter-spacing: 5px;">ELITE GAMING EXPERIENCE</p>
+    </header>
+
+    <div class="container">
+        <div class="game-card" onclick="openGame('snake')"><i style="color:var(--neon-green)">🐍</i><h3>SNAKE PRO</h3></div>
+        <div class="game-card" onclick="openGame('rocket')"><i style="color:var(--neon-blue)">🚀</i><h3>ROCKET X</h3></div>
+        <div class="game-card" onclick="openGame('breakout')"><i style="color:var(--neon-pink)">🧱</i><h3>BREAKOUT</h3></div>
+        <div class="game-card" onclick="openGame('memory')"><i style="color:var(--neon-purple)">🧠</i><h3>MEMORY</h3></div>
+        <div class="game-card" onclick="openGame('pong')"><i style="color:white">🏓</i><h3>PONG AI</h3></div>
+        <div class="game-card" onclick="openGame('meteor')"><i style="color:orange">☄️</i><h3>METEOR</h3></div>
+        <div class="game-card" onclick="openGame('reflex')"><i style="color:var(--neon-red)">⚡</i><h3>REFLEX</h3></div>
+        <div class="game-card" onclick="openGame('math')"><i style="color:yellow">➕</i><h3>MATH</h3></div>
+        <div class="game-card" onclick="openGame('guess')"><i style="color:cyan">🎲</i><h3>GUESS 100</h3></div>
+        <div class="game-card" onclick="openGame('clicker')"><i style="color:var(--neon-green)">🖱️</i><h3>CLICKER</h3></div>
+    </div>
+
+    <div id="overlay">
+        <div id="game-ui"></div>
+        <canvas id="mainCanvas" width="400" height="550"></canvas>
+        <div id="result-screen"></div>
+        
+        <div id="meme-left" class="meme-area" style="left: 20px;"><img></div>
+        <div id="meme-right" class="meme-area" style="right: 20px;"><img></div>
+
+        <button class="exit-btn" onclick="closeArcade()">OYUNU KAPAT</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const ui = document.getElementById('game-ui');
+    const res = document.getElementById('result-screen');
+    const mLeft = document.getElementById('meme-left');
+    const mRight = document.getElementById('meme-right');
+
+    const memeGallery = [
+        "https://i.imgflip.com/1otk96.jpg", "https://i.imgflip.com/26am.jpg",
+        "https://i.imgflip.com/9ehk.jpg", "https://i.imgflip.com/1bij.jpg",
+        "https://i.imgflip.com/4t0m5.jpg", "https://i.imgflip.com/1h7in3.jpg"
+    ];
+
+    let gameInterval, score = 0, gameActive = false;
+
+    function closeArcade() {
+        gameActive = false;
+        clearInterval(gameInterval);
+        overlay.style.display = "none";
+        res.style.display = "none";
+        ui.innerHTML = "";
+    }
+
+    function showMeme() {
+        mLeft.querySelector('img').src = memeGallery[Math.floor(Math.random()*memeGallery.length)];
+        mRight.querySelector('img').src = memeGallery[Math.floor(Math.random()*memeGallery.length)];
+        mLeft.style.display = "block"; mRight.style.display = "block";
+    }
+
+    function endGame(isWin, msg = "") {
+        gameActive = false;
+        clearInterval(gameInterval);
+        res.className = isWin ? 'win' : 'lose';
+        res.innerHTML = `<h2 style="margin:0">${isWin ? 'TEBRİKLER!' : 'MAALESEF!'}</h2>
+                         <p style="font-size:1.5rem; margin:10px 0">${isWin ? 'KAZANDIN' : 'KAYBETTİN'}</p>
+                         <p>${msg}</p>
+                         <button class="btn-pro" onclick="closeArcade()">MENÜYE DÖN</button>`;
+        res.style.display = "block";
+    }
+
+    function openGame(game) {
+        overlay.style.display = "flex";
+        res.style.display = "none";
+        ui.innerHTML = "";
+        canvas.style.display = "block";
+        score = 0; gameActive = true;
+        showMeme();
+
+        if(game === 'snake') playSnake();
+        if(game === 'rocket') playRocket();
+        if(game === 'breakout') playBreakout();
+        if(game === 'pong') playPong();
+        if(game === 'meteor') playMeteor();
+        if(game === 'memory') playMemory();
+        if(game === 'math') playMath();
+        if(game === 'guess') playGuess();
+        if(game === 'clicker') playClicker();
+        if(game === 'reflex') playReflex();
+    }
+
+    // --- GAME 1: SNAKE ---
+    function playSnake() {
+        let snake = [{x:10,y:10}], food = {x:5,y:5}, d = {x:1,y:0};
+        document.onkeydown = e => {
+            if(e.key=="ArrowUp"&&d.y==0) d={x:0,y:-1}; if(e.key=="ArrowDown"&&d.y==0) d={x:0,y:1};
+            if(e.key=="ArrowLeft"&&d.x==0) d={x:-1,y:0}; if(e.key=="ArrowRight"&&d.x==0) d={x:1,y:0};
+        };
+        gameInterval = setInterval(() => {
+            let head = {x: snake[0].x + d.x, y: snake[0].y + d.y};
+            if(head.x<0) head.x=19; if(head.x>19) head.x=0; if(head.y<0) head.y=26; if(head.y>26) head.y=0;
+            if(snake.some(s=>s.x==head.x&&s.y==head.y)) return endGame(false, "Skor: "+score);
+            snake.unshift(head);
+            if(head.x==food.x && head.y==food.y) { score++; food={x:Math.floor(Math.random()*20), y:Math.floor(Math.random()*27)}; }
+            else snake.pop();
+            ctx.fillStyle="#000"; ctx.fillRect(0,0,400,550);
+            ctx.fillStyle="#39ff14"; snake.forEach(s=>ctx.fillRect(s.x*20+1, s.y*20+1, 18, 18));
+            ctx.fillStyle="#ff007b"; ctx.fillRect(food.x*20, food.y*20, 18, 18);
+        }, 120);
+    }
+
+    // --- GAME 2: ROCKET ---
+    function playRocket() {
+        let y=250, v=0, obs=[], press=false;
+        const push = () => press=true; const release = () => press=false;
+        overlay.onmousedown = push; overlay.onmouseup = release;
+        gameInterval = setInterval(() => {
+            if(press) v-=0.7; v+=0.4; y+=v;
+            if(Math.random()<0.03) obs.push({x:400, h:Math.random()*250+50});
+            ctx.fillStyle="#000"; ctx.fillRect(0,0,400,550);
+            ctx.fillStyle="cyan"; ctx.fillRect(50, y, 30, 20);
+            obs.forEach((o,i)=>{
+                o.x-=4; ctx.fillStyle="#bc13fe"; ctx.fillRect(o.x, 0, 40, o.h); ctx.fillRect(o.x, o.h+160, 40, 550);
+                if(o.x<80&&o.x>20&&(y<o.h||y+20>o.h+160)) endGame(false, "Skor: "+score);
+                if(o.x==40) score++;
+            });
+            if(y>550||y<0) endGame(false, "Sınır dışı!");
+        }, 20);
+    }
+
+    // --- GAME 3: BREAKOUT ---
+    function playBreakout() {
+        let px=150, bx=200, by=400, bdx=4, bdy=-4, bricks=[];
+        for(let i=0; i<30; i++) bricks.push({x:(i%6)*65+10, y:Math.floor(i/6)*25+60, s:1});
+        canvas.onmousemove = e => { let r=canvas.getBoundingClientRect(); px=e.clientX-r.left-45; };
+        gameInterval = setInterval(() => {
+            bx+=bdx; by+=bdy;
+            if(bx<0||bx>400) bdx*=-1; if(by<0) bdy*=-1;
+            if(by>520 && bx>px && bx<px+90) bdy=-Math.abs(bdy);
+            if(by>550) return endGame(false, "Topu Kaçırdın!");
+            bricks.forEach(b=>{
+                if(b.s && bx>b.x && bx<b.x+60 && by>b.y && by<b.y+20) { b.s=0; bdy*=-1; score++; }
+            });
+            if(bricks.every(b=>!b.s)) endGame(true, "Tebrikler!");
+            ctx.fillStyle="#000"; ctx.fillRect(0,0,400,550);
+            ctx.fillStyle="cyan"; ctx.fillRect(px, 530, 90, 10);
+            ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(bx,by,7,0,7); ctx.fill();
+            bricks.forEach(b=> { if(b.s){ ctx.fillStyle="#ff007b"; ctx.fillRect(b.x,b.y,60,20); }});
+        }, 16);
+    }
+
+    // --- GAME 4: MEMORY ---
+    function playMemory() {
+        canvas.style.display = "none";
+        const syms = ["🤖","🚀","💎","👻","🔥","👑","👽","👾"];
+        const deck = [...syms, ...syms].sort(()=>Math.random()-0.5);
+        ui.innerHTML = `<div class="html-box"><h2>MEMORY MATRIX</h2><div id="m-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px"></div></div>`;
+        let open = [], matched = 0;
+        deck.forEach(s => {
+            const c = document.createElement('div');
+            c.style = "width:60px;height:60px;background:#222;border:1px solid var(--neon-blue);display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer";
+            c.onclick = () => {
+                if(open.length<2 && c.innerText=="") {
+                    c.innerText = s; open.push(c);
+                    if(open.length==2) {
+                        if(open[0].innerText==open[1].innerText) { matched++; open=[]; if(matched==8) endGame(true); }
+                        else { setTimeout(()=>{open.forEach(o=>o.innerText=""); open=[]}, 500); }
+                    }
+                }
+            };
+            document.getElementById('m-grid').appendChild(c);
+        });
+    }
+
+    // --- GAME 5: GUESS (1-100) ---
+    function playGuess() {
+        canvas.style.display = "none";
+        let target = Math.floor(Math.random()*100)+1, tries = 0;
+        ui.innerHTML = `<div class="html-box"><h2>SAYI TAHMİN (1-100)</h2>
+                        <input type="number" id="g-input" class="input-pro"><br>
+                        <button class="btn-pro" onclick="checkGuess(${target})">TAHMİN ET</button>
+                        <p id="g-hint" style="margin-top:20px; color:var(--neon-blue)">Hadi başla!</p></div>`;
+    }
+    window.checkGuess = (t) => {
+        let val = document.getElementById('g-input').value;
+        if(val == t) endGame(true, "Harika! Sayı: "+t);
+        else {
+            document.getElementById('g-hint').innerText = val < t ? "Daha BÜYÜK bir sayı gir ▲" : "Daha KÜÇÜK bir sayı gir ▼";
+            document.getElementById('g-input').value = "";
+        }
+    }
+
+    // --- GAME 6: CLICKER ---
+    function playClicker() {
+        canvas.style.display = "none";
+        let time = 10;
+        ui.innerHTML = `<div class="html-box"><h1 id="c-timer">10</h1><button id="c-btn" style="width:150px;height:150px;border-radius:50%;border:none;background:var(--neon-blue);font-size:2rem;cursor:pointer">TIKLA!</button><h3 id="c-count">SKOR: 0</h3></div>`;
+        document.getElementById('c-btn').onclick = () => { score++; document.getElementById('c-count').innerText = "SKOR: "+score; };
+        gameInterval = setInterval(() => {
+            time--; document.getElementById('c-timer').innerText = time;
+            if(time<=0) endGame(score > 50, "Skorun: "+score);
+        }, 1000);
+    }
+
+    // --- GAME 7: MATH ---
+    function playMath() {
+        canvas.style.display = "none";
+        let a = Math.floor(Math.random()*50), b = Math.floor(Math.random()*50);
+        ui.innerHTML = `<div class="html-box"><h2>${a} + ${b} = ?</h2><input type="number" id="m-ans" class="input-pro"><br><button class="btn-pro" onclick="checkMath(${a+b})">CEVAPLA</button></div>`;
+    }
+    window.checkMath = (c) => {
+        let v = document.getElementById('m-ans').value;
+        if(v == c) endGame(true); else endGame(false, "Doğrusu: "+c);
+    }
+
+    // --- GAME 8: PONG ---
+    function playPong() {
+        let py=200, ay=200, bx=200, by=250, bdx=5, bdy=5;
+        canvas.onmousemove = e => { let r=canvas.getBoundingClientRect(); py=e.clientY-r.top-40; };
+        gameInterval = setInterval(() => {
+            bx+=bdx; by+=bdy;
+            if(ay+40<by) ay+=4; else ay-=4;
+            if(by<0||by>550) bdy*=-1;
+            if((bx<20 && by>py && by<py+80) || (bx>380 && by>ay && by<ay+80)) bdx*=-1.1;
+            if(bx<0) endGame(false); if(bx>400) { score++; bdx=-5; bx=200; if(score>=5) endGame(true); }
+            ctx.fillStyle="#000"; ctx.fillRect(0,0,400,550);
+            ctx.fillStyle="#fff"; ctx.fillRect(10,py,10,80); ctx.fillRect(380,ay,10,80);
+            ctx.beginPath(); ctx.arc(bx,by,8,0,7); ctx.fill();
+        }, 20);
+    }
+
+    // --- GAME 9: METEOR ---
+    function playMeteor() {
+        let x=180, m=[]; canvas.onmousemove = e => { let r=canvas.getBoundingClientRect(); x=e.clientX-r.left-20; };
+        gameInterval = setInterval(() => {
+            if(Math.random()<0.06) m.push({x:Math.random()*370, y:0});
+            ctx.fillStyle="#000"; ctx.fillRect(0,0,400,550);
+            ctx.fillStyle="lime"; ctx.fillRect(x, 500, 40, 40);
+            m.forEach((o,i)=>{ o.y+=6; ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(o.x,o.y,15,0,7); ctx.fill();
+            if(o.y>500 && o.x>x-15 && o.x<x+55) endGame(false, "Meteor çarptı!");
+            if(o.y>550) { score++; m.splice(i,1); if(score>30) endGame(true); }});
+        }, 20);
+    }
+
+    // --- GAME 10: REFLEX ---
+    function playReflex() {
+        canvas.style.display="none"; ui.innerHTML="<div class='html-box'><button id='ref-b' style='width:200px;height:200px;border-radius:50%;background:red;font-size:1.5rem;color:white;cursor:pointer'>BEKLE...</button></div>";
+        setTimeout(() => {
+            let b = document.getElementById('ref-b'); if(!b) return;
+            b.style.background = "lime"; b.innerText = "TIKLA!"; let start = Date.now();
+            b.onclick = () => { let diff = Date.now()-start; endGame(diff < 250, diff+"ms"); };
+        }, 2000+Math.random()*3000);
+    }
+
+</script>
+</body>
+</html>
